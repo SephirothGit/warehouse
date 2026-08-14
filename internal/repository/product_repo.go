@@ -51,6 +51,9 @@ func (p *productRepo) GetAll() ([]Product, error) {
 		}
 		results = append(results, item)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
 
 	return results, nil
 }

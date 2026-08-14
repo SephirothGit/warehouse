@@ -50,6 +50,9 @@ func (w *warehouseRepo) GetAll() ([]Warehouse, error) {
 		}
 		results = append(results, item)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
 
 	return results, nil
 }
