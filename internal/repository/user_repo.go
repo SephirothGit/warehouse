@@ -9,6 +9,7 @@ type UserRepo interface {
 	GetByEmail(email string) (User, error)
 	AssignRole(userID int, roleID int) error
 	GetRoles(userID int) ([]string, error)
+	GetRoleIDByName(name string) (int, error)
 }
 
 type User struct {
@@ -77,4 +78,16 @@ func (u *userRepo) GetRoles(userID int) ([]string, error) {
 		return nil, err
 	}
 	return results, nil
+}
+
+func (u *userRepo) GetRoleIDByName(name string) (int, error) {
+	row := u.db.QueryRow("SELECT id FROM roles WHERE name = $1", name)
+	
+	var id int
+	err := row.Scan(&id)
+	if err != nil {
+		return 0, err
+	}
+
+	return id, nil
 }
