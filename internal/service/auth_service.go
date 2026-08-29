@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"strconv"
 	"time"
 
@@ -22,6 +23,7 @@ type authService struct {
 type AuthService interface {
 	Register(email, password string) (int, error)
 	Login(email, password string) (TokenPair, error)
+	RefreshAccessToken(rawRefreshToken string) (TokenPair, error)
 }
 
 func NewAuthService(userRepo repository.UserRepo, refreshRepo repository.RefreshTokenRepo, jwtSecret []byte) AuthService {
@@ -85,4 +87,46 @@ func (a *authService) Login(email, password string) (TokenPair, error) {
 	}
 
 	return TokenPair{AccessToken: accessToken, RefreshToken: refreshToken}, nil
+}
+
+func (a * authService) RefreshAccessToken(rawRefreshToken string) (TokenPair, error) {
+	tokenHash := auth.HashToken(rawRefreshToken)
+
+	userID, expiresAt, revoked, err := a.refreshRepo.FindByHash(tokenHash)
+	if err != nil {
+		return TokenPair{}, err
+	}
+
+	if revoked {
+		a.refreshRepo.RevokeAllForUser(userID)
+		return TokenPair{}, fmt.Errorf("tokn reuse detection, all sessions revoked")
+	}
+
+	if expiresAt.Before(time.Now()) {
+		return TokenPair{}, fmt.Errorf("refresh token expired")
+	}
+
+	err = a.refreshRepo.Revoke(tokenHash)
+	if err != nil {
+		return TokenPair{}, err
+	}
+
+newRawRefreshToken, err := auth.GenerateRefreshToken()
+if err != nil {
+	return TokenPair{}, err
+}
+newTokenHash := auth.HashToken(newRawRefreshToken)
+newExpiresAt := time.Now().Add(30 * 24 * time.Hour)
+
+err = a.refreshRepo.Save(userID, newTokenHash, newExpiresAt)
+if err != nil {
+	return TokenPair{}, err
+}
+
+accessToken, err := auth.GenerateToken(strconv.Itoa(userID), a.jwtSecret)
+if err != nil {
+	return TokenPair{}, err
+}
+
+return TokenPair{AccessToken: accessToken, RefreshToken: newRawRefreshToken}, nil
 }
