@@ -1,9 +1,17 @@
 package service
 
 import (
+	"strconv"
+	"time"
+
 	"github.com/SephirothGit/warehouse/internal/auth"
 	"github.com/SephirothGit/warehouse/internal/repository"
 )
+
+type TokenPair struct {
+	AccessToken  string
+	RefreshToken string
+}
 
 type authService struct {
 	userRepo    repository.UserRepo
@@ -13,6 +21,7 @@ type authService struct {
 
 type AuthService interface {
 	Register(email, password string) (int, error)
+	Login(email, password string) (TokenPair, error)
 }
 
 func NewAuthService(userRepo repository.UserRepo, refreshRepo repository.RefreshTokenRepo, jwtSecret []byte) AuthService {
@@ -45,4 +54,35 @@ func (a *authService) Register(email, password string) (int, error) {
 	}
 
 	return userID, nil
+}
+
+func (a *authService) Login(email, password string) (TokenPair, error) {
+	user, err := a.userRepo.GetByEmail(email)
+	if err != nil {
+		return TokenPair{}, err
+	}
+
+	err = auth.CheckPassword(user.PasswordHash, password)
+	if err != nil {
+		return TokenPair{}, err
+	}
+
+	accessToken, err := auth.GenerateToken(strconv.Itoa(user.ID), a.jwtSecret)
+	if err != nil {
+		return TokenPair{}, err
+	}
+
+	refreshToken, err := auth.GenerateRefreshToken()
+	if err != nil {
+		return TokenPair{}, err
+	}
+	tokenHash := auth.HashToken(refreshToken)
+	expiresAt := time.Now().Add(30 * 24 * time.Hour)
+
+	err = a.refreshRepo.Save(user.ID, tokenHash, expiresAt)
+	if err != nil {
+		return TokenPair{}, err
+	}
+
+	return TokenPair{AccessToken: accessToken, RefreshToken: refreshToken}, nil
 }
