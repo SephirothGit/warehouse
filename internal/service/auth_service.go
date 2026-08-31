@@ -24,6 +24,7 @@ type AuthService interface {
 	Register(email, password string) (int, error)
 	Login(email, password string) (TokenPair, error)
 	RefreshAccessToken(rawRefreshToken string) (TokenPair, error)
+	Logout(rawRefreshToken string) error
 }
 
 func NewAuthService(userRepo repository.UserRepo, refreshRepo repository.RefreshTokenRepo, jwtSecret []byte) AuthService {
@@ -89,7 +90,7 @@ func (a *authService) Login(email, password string) (TokenPair, error) {
 	return TokenPair{AccessToken: accessToken, RefreshToken: refreshToken}, nil
 }
 
-func (a * authService) RefreshAccessToken(rawRefreshToken string) (TokenPair, error) {
+func (a *authService) RefreshAccessToken(rawRefreshToken string) (TokenPair, error) {
 	tokenHash := auth.HashToken(rawRefreshToken)
 
 	userID, expiresAt, revoked, err := a.refreshRepo.FindByHash(tokenHash)
@@ -99,7 +100,7 @@ func (a * authService) RefreshAccessToken(rawRefreshToken string) (TokenPair, er
 
 	if revoked {
 		a.refreshRepo.RevokeAllForUser(userID)
-		return TokenPair{}, fmt.Errorf("tokn reuse detection, all sessions revoked")
+		return TokenPair{}, fmt.Errorf("token reuse detected, all sessions revoked")
 	}
 
 	if expiresAt.Before(time.Now()) {
@@ -111,22 +112,27 @@ func (a * authService) RefreshAccessToken(rawRefreshToken string) (TokenPair, er
 		return TokenPair{}, err
 	}
 
-newRawRefreshToken, err := auth.GenerateRefreshToken()
-if err != nil {
-	return TokenPair{}, err
-}
-newTokenHash := auth.HashToken(newRawRefreshToken)
-newExpiresAt := time.Now().Add(30 * 24 * time.Hour)
+	newRawRefreshToken, err := auth.GenerateRefreshToken()
+	if err != nil {
+		return TokenPair{}, err
+	}
+	newTokenHash := auth.HashToken(newRawRefreshToken)
+	newExpiresAt := time.Now().Add(30 * 24 * time.Hour)
 
-err = a.refreshRepo.Save(userID, newTokenHash, newExpiresAt)
-if err != nil {
-	return TokenPair{}, err
+	err = a.refreshRepo.Save(userID, newTokenHash, newExpiresAt)
+	if err != nil {
+		return TokenPair{}, err
+	}
+
+	accessToken, err := auth.GenerateToken(strconv.Itoa(userID), a.jwtSecret)
+	if err != nil {
+		return TokenPair{}, err
+	}
+
+	return TokenPair{AccessToken: accessToken, RefreshToken: newRawRefreshToken}, nil
 }
 
-accessToken, err := auth.GenerateToken(strconv.Itoa(userID), a.jwtSecret)
-if err != nil {
-	return TokenPair{}, err
-}
-
-return TokenPair{AccessToken: accessToken, RefreshToken: newRawRefreshToken}, nil
+func (a *authService) Logout(rawRefreshToken string) error {
+	tokenHash := auth.HashToken(rawRefreshToken)
+	return a.refreshRepo.Revoke(tokenHash)
 }
