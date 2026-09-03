@@ -16,6 +16,11 @@ type registerRequest struct {
 	Password string `json:"password"`
 }
 
+type loginRequest struct {
+	Email string `json:"email"`
+	Password string `json:"password"`
+}
+
 func NewAuthHandler(authService service.AuthService) *AuthHandler {
 	return &AuthHandler{
 		authService: authService,
@@ -38,4 +43,22 @@ func (h *AuthHandler) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]int{"user_id": userID})
+}
+
+func (h *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
+	var req loginRequest
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		http.Error(w, "unable to login user", http.StatusBadRequest)
+		return
+	}
+
+	tokens, err := h.authService.Login(req.Email, req.Password)
+	if err != nil {
+		http.Error(w, "invalid email or password", http.StatusUnauthorized)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(tokens)
 }
