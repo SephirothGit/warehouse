@@ -11,13 +11,17 @@ type AuthHandler struct {
 	authService service.AuthService
 }
 
+type refreshRequest struct {
+	RefreshToken string `json:"refresh_token"`
+}
+
 type registerRequest struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
 type loginRequest struct {
-	Email string `json:"email"`
+	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
@@ -61,4 +65,39 @@ func (h *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(tokens)
+}
+
+func (h *AuthHandler) RefreshHandler(w http.ResponseWriter, r *http.Request) {
+	var req refreshRequest
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		http.Error(w, "invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	tokens, err := h.authService.RefreshAccessToken(req.RefreshToken)
+	if err != nil {
+		http.Error(w, "invalid or expired refresh token", http.StatusUnauthorized)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(tokens)
+}
+
+func (h *AuthHandler) LogoutHandler(w http.ResponseWriter, r *http.Request) {
+	var req refreshRequest
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		http.Error(w, "invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	err = h.authService.Logout(req.RefreshToken)
+	if err != nil {
+		http.Error(w, "unable to logout", http.StatusUnauthorized)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }
