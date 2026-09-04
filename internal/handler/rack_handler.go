@@ -38,7 +38,7 @@ func (h *RackHandler) CreateHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(id)
+	json.NewEncoder(w).Encode(map[string]int{"id": id})
 }
 
 func (h *RackHandler) ListHandler(w http.ResponseWriter, r *http.Request) {
@@ -52,6 +52,7 @@ func (h *RackHandler) ListHandler(w http.ResponseWriter, r *http.Request) {
 	racks, err := h.rackService.GetByZone(zoneID)
 	if err != nil {
 		http.Error(w, "unable to fetch racks", http.StatusInternalServerError)
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")

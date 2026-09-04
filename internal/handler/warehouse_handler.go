@@ -12,8 +12,8 @@ type WarehouseHandler struct {
 }
 
 type createWarehouseRequest struct {
-	Name    string `json"name"`
-	Address string `json"address"`
+	Name    string `json:"name"`
+	Address string `json:"address"`
 }
 
 func NewWarehouseHandler(warehouseService service.WarehouseService) *WarehouseHandler {
@@ -32,11 +32,11 @@ func (h *WarehouseHandler) CreateHandler(w http.ResponseWriter, r *http.Request)
 
 	id, err := h.warehouseService.CreateWarehouse(req.Name, req.Address)
 	if err != nil {
-		http.Error(w, "unable to create warehouse", http.StatusUnauthorized)
+		http.Error(w, "unable to create warehouse", http.StatusInternalServerError)
 		return
 	}
 
-	w.Header().Set("Content-Type", "appliaction/json")
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]int{"id": id})
 }
 
