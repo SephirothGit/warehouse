@@ -30,7 +30,7 @@ func NewStockHandler(stockService service.StockService) *StockHandler {
 	}
 }
 
-func (h *StockHandler) MoveHndler(w http.ResponseWriter, r *http.Request) {
+func (h *StockHandler) MoveHandler(w http.ResponseWriter, r *http.Request) {
 	var req moveStockRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
