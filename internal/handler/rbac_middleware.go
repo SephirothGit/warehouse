@@ -19,7 +19,7 @@ func RequireRole(role string, userRepo repository.UserRepo) func(http.Handler) h
 			userIDInt, err := strconv.Atoi(userID)
 			if err != nil {
 				http.Error(w, "invalid user id", http.StatusInternalServerError)
-				return 
+				return
 			}
 
 			userRoles, err := userRepo.GetRoles(userIDInt)
@@ -28,15 +28,7 @@ func RequireRole(role string, userRepo repository.UserRepo) func(http.Handler) h
 				return
 			}
 
-			hasRole := false
-			for _, roleName := range userRoles {
-				if roleName == role {
-					hasRole = true
-					break
-				}
-			}
-
-			if !hasRole {
+			if !hasRequiredLevel(userRoles, role) {
 				http.Error(w, "forbidden", http.StatusForbidden)
 				return
 			}
