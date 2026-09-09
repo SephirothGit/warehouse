@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 
+	_ "github.com/lib/pq"
 	"github.com/SephirothGit/warehouse/internal/auth"
 	"github.com/SephirothGit/warehouse/internal/handler"
 	"github.com/SephirothGit/warehouse/internal/repository"
@@ -62,7 +63,7 @@ func main() {
 
 	r.Post("/register", authHandler.RegisterHandler)
 	r.Post("/login", authHandler.LoginHandler)
-	r.Post("refresh", authHandler.RefreshHandler)
+	r.Post("/refresh", authHandler.RefreshHandler)
 	r.Post("/logout", authHandler.LogoutHandler)
 
 	r.Group(func(r chi.Router) {
@@ -82,7 +83,7 @@ func main() {
 
 			r.Post("/warehouses", warehouseHandler.CreateHandler)
 			r.Post("/zones", zoneHandler.CreateHandler)
-			r.Post("racks", rackHandler.CreateHandler)
+			r.Post("/racks", rackHandler.CreateHandler)
 			r.Post("/shelves", shelfHandler.CreateHandler)
 			r.Post("/products", productHandler.CreateHandler)
 		})
