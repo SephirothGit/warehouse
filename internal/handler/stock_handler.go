@@ -50,7 +50,7 @@ func (h *StockHandler) MoveHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.stockService.MoveStock(req.FromShelfID, req.ToShelfID, req.ProductID, req.Quantity, userID)
+	err = h.stockService.MoveStock(r.Context(), req.FromShelfID, req.ToShelfID, req.ProductID, req.Quantity, userID)
 	if err != nil {
 		http.Error(w, "unable to move stock", http.StatusInternalServerError)
 		return
@@ -79,7 +79,7 @@ func (h *StockHandler) AddHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.stockService.AddStock(req.ShelfID, req.ProductID, req.Quantity, userID)
+	err = h.stockService.AddStock(r.Context(), req.ShelfID, req.ProductID, req.Quantity, userID)
 	if err != nil {
 		http.Error(w, "unable to add stock", http.StatusInternalServerError)
 		return
@@ -96,7 +96,7 @@ func (h *StockHandler) GetByShelfHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	items, err := h.stockService.GetByShelf(shelfID)
+	items, err := h.stockService.GetByShelf(r.Context(), shelfID)
 	if err != nil {
 		http.Error(w, "unable to fetch stock items", http.StatusInternalServerError)
 		return
