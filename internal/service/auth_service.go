@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"time"
@@ -21,10 +22,10 @@ type authService struct {
 }
 
 type AuthService interface {
-	Register(email, password string) (int, error)
-	Login(email, password string) (TokenPair, error)
-	RefreshAccessToken(rawRefreshToken string) (TokenPair, error)
-	Logout(rawRefreshToken string) error
+	Register(ctx context.Context, email, password string) (int, error)
+	Login(ctx context.Context, email, password string) (TokenPair, error)
+	RefreshAccessToken(ctx context.Context, rawRefreshToken string) (TokenPair, error)
+	Logout(ctx context.Context, rawRefreshToken string) error
 }
 
 func NewAuthService(userRepo repository.UserRepo, refreshRepo repository.RefreshTokenRepo, jwtSecret []byte) AuthService {
@@ -35,23 +36,23 @@ func NewAuthService(userRepo repository.UserRepo, refreshRepo repository.Refresh
 	}
 }
 
-func (a *authService) Register(email, password string) (int, error) {
+func (a *authService) Register(ctx context.Context, email, password string) (int, error) {
 	hashedPassword, err := auth.HashPassword(password)
 	if err != nil {
 		return 0, err
 	}
 
-	userID, err := a.userRepo.Create(email, hashedPassword)
+	userID, err := a.userRepo.Create(ctx, email, hashedPassword)
 	if err != nil {
 		return 0, err
 	}
 
-	roleID, err := a.userRepo.GetRoleIDByName("warehouse_worker")
+	roleID, err := a.userRepo.GetRoleIDByName(ctx, "warehouse_worker")
 	if err != nil {
 		return 0, err
 	}
 
-	err = a.userRepo.AssignRole(userID, roleID)
+	err = a.userRepo.AssignRole(ctx, userID, roleID)
 	if err != nil {
 		return 0, err
 	}
@@ -59,8 +60,8 @@ func (a *authService) Register(email, password string) (int, error) {
 	return userID, nil
 }
 
-func (a *authService) Login(email, password string) (TokenPair, error) {
-	user, err := a.userRepo.GetByEmail(email)
+func (a *authService) Login(ctx context.Context, email, password string) (TokenPair, error) {
+	user, err := a.userRepo.GetByEmail(ctx, email)
 	if err != nil {
 		return TokenPair{}, err
 	}
@@ -82,7 +83,7 @@ func (a *authService) Login(email, password string) (TokenPair, error) {
 	tokenHash := auth.HashToken(refreshToken)
 	expiresAt := time.Now().Add(30 * 24 * time.Hour)
 
-	err = a.refreshRepo.Save(user.ID, tokenHash, expiresAt)
+	err = a.refreshRepo.Save(ctx, user.ID, tokenHash, expiresAt)
 	if err != nil {
 		return TokenPair{}, err
 	}
@@ -90,16 +91,16 @@ func (a *authService) Login(email, password string) (TokenPair, error) {
 	return TokenPair{AccessToken: accessToken, RefreshToken: refreshToken}, nil
 }
 
-func (a *authService) RefreshAccessToken(rawRefreshToken string) (TokenPair, error) {
+func (a *authService) RefreshAccessToken(ctx context.Context, rawRefreshToken string) (TokenPair, error) {
 	tokenHash := auth.HashToken(rawRefreshToken)
 
-	userID, expiresAt, revoked, err := a.refreshRepo.FindByHash(tokenHash)
+	userID, expiresAt, revoked, err := a.refreshRepo.FindByHash(ctx, tokenHash)
 	if err != nil {
 		return TokenPair{}, err
 	}
 
 	if revoked {
-		a.refreshRepo.RevokeAllForUser(userID)
+		a.refreshRepo.RevokeAllForUser(ctx, userID)
 		return TokenPair{}, fmt.Errorf("token reuse detected, all sessions revoked")
 	}
 
@@ -107,7 +108,7 @@ func (a *authService) RefreshAccessToken(rawRefreshToken string) (TokenPair, err
 		return TokenPair{}, fmt.Errorf("refresh token expired")
 	}
 
-	err = a.refreshRepo.Revoke(tokenHash)
+	err = a.refreshRepo.Revoke(ctx, tokenHash)
 	if err != nil {
 		return TokenPair{}, err
 	}
@@ -119,7 +120,7 @@ func (a *authService) RefreshAccessToken(rawRefreshToken string) (TokenPair, err
 	newTokenHash := auth.HashToken(newRawRefreshToken)
 	newExpiresAt := time.Now().Add(30 * 24 * time.Hour)
 
-	err = a.refreshRepo.Save(userID, newTokenHash, newExpiresAt)
+	err = a.refreshRepo.Save(ctx, userID, newTokenHash, newExpiresAt)
 	if err != nil {
 		return TokenPair{}, err
 	}
@@ -132,7 +133,7 @@ func (a *authService) RefreshAccessToken(rawRefreshToken string) (TokenPair, err
 	return TokenPair{AccessToken: accessToken, RefreshToken: newRawRefreshToken}, nil
 }
 
-func (a *authService) Logout(rawRefreshToken string) error {
+func (a *authService) Logout(ctx context.Context, rawRefreshToken string) error {
 	tokenHash := auth.HashToken(rawRefreshToken)
-	return a.refreshRepo.Revoke(tokenHash)
+	return a.refreshRepo.Revoke(ctx, tokenHash)
 }
