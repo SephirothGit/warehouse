@@ -1,10 +1,13 @@
 package repository
 
-import "database/sql"
+import (
+	"context"
+	"database/sql"
+)
 
 type ShelfRepo interface {
-	Create(rackID int, level int) (int, error)
-	GetByRack(rackID int) ([]Shelf, error)
+	Create(ctx context.Context, rackID int, level int) (int, error)
+	GetByRack(ctx context.Context, rackID int) ([]Shelf, error)
 }
 
 type Shelf struct {
@@ -23,8 +26,8 @@ func NewShelfRepo(db *sql.DB) ShelfRepo {
 	}
 }
 
-func (s *shelfRepo) Create(rackID int, level int) (int, error) {
-	row := s.db.QueryRow("INSERT INTO shelves (rack_id, level) VALUES ($1, $2) RETURNING id", rackID, level)
+func (s *shelfRepo) Create(ctx context.Context, rackID int, level int) (int, error) {
+	row := s.db.QueryRowContext(ctx, "INSERT INTO shelves (rack_id, level) VALUES ($1, $2) RETURNING id", rackID, level)
 
 	var id int
 	err := row.Scan(&id)
@@ -34,8 +37,8 @@ func (s *shelfRepo) Create(rackID int, level int) (int, error) {
 	return id, nil
 }
 
-func (s *shelfRepo) GetByRack(rackID int) ([]Shelf, error) {
-	rows, err := s.db.Query("SELECT id, rack_id, level FROM shelves WHERE rack_id = $1", rackID)
+func (s *shelfRepo) GetByRack(ctx context.Context, rackID int) ([]Shelf, error) {
+	rows, err := s.db.QueryContext(ctx, "SELECT id, rack_id, level FROM shelves WHERE rack_id = $1", rackID)
 	if err != nil {
 		return nil, err
 	}
