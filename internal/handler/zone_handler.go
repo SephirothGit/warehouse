@@ -31,7 +31,7 @@ func (z *ZoneHandler) CreateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := z.zoneService.CreateZone(req.WarehouseID, req.Name)
+	id, err := z.zoneService.CreateZone(r.Context(), req.WarehouseID, req.Name)
 	if err != nil {
 		http.Error(w, "unable to create zone", http.StatusInternalServerError)
 		return
@@ -49,7 +49,7 @@ func (z *ZoneHandler) ListHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	zones, err := z.zoneService.ListZonesByWarehouse(warehouseID)
+	zones, err := z.zoneService.ListZonesByWarehouse(r.Context(), warehouseID)
 	if err != nil {
 		http.Error(w, "unable to fetch zones", http.StatusInternalServerError)
 		return
