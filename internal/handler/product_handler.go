@@ -31,7 +31,7 @@ func (h *ProductHandler) CreateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := h.productService.Create(req.SKU, req.Name, req.Unit)
+	id, err := h.productService.Create(r.Context(), req.SKU, req.Name, req.Unit)
 	if err != nil {
 		http.Error(w, "unable to create product", http.StatusInternalServerError)
 		return
@@ -42,7 +42,7 @@ func (h *ProductHandler) CreateHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *ProductHandler) ListHandler(w http.ResponseWriter, r *http.Request) {
-	products, err := h.productService.GetAll()
+	products, err := h.productService.GetAll(r.Context())
 	if err != nil {
 		http.Error(w, "unable to fetch products", http.StatusInternalServerError)
 		return
