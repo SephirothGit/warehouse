@@ -1,10 +1,13 @@
 package repository
 
-import "database/sql"
+import (
+	"context"
+	"database/sql"
+)
 
 type WarehouseRepo interface {
-	Create(name, address string) (int, error)
-	GetAll() ([]Warehouse, error)
+	Create(ctx context.Context, name, address string) (int, error)
+	GetAll(ctx context.Context) ([]Warehouse, error)
 }
 type warehouseRepo struct {
 	db *sql.DB
@@ -22,8 +25,8 @@ func NewWarehouseRepo(db *sql.DB) WarehouseRepo {
 	}
 }
 
-func (w *warehouseRepo) Create(name, address string) (int, error) {
-	row := w.db.QueryRow("INSERT INTO warehouses (name, address) VALUES ($1, $2) RETURNING id", name, address)
+func (w *warehouseRepo) Create(ctx context.Context, name, address string) (int, error) {
+	row := w.db.QueryRowContext(ctx, "INSERT INTO warehouses (name, address) VALUES ($1, $2) RETURNING id", name, address)
 
 	var id int
 	err := row.Scan(&id)
@@ -34,8 +37,8 @@ func (w *warehouseRepo) Create(name, address string) (int, error) {
 	return id, nil
 }
 
-func (w *warehouseRepo) GetAll() ([]Warehouse, error) {
-	rows, err := w.db.Query("SELECT id, name, address FROM warehouses")
+func (w *warehouseRepo) GetAll(ctx context.Context) ([]Warehouse, error) {
+	rows, err := w.db.QueryContext(ctx, "SELECT id, name, address FROM warehouses")
 	if err != nil {
 		return nil, err
 	}
