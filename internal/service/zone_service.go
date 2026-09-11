@@ -1,14 +1,18 @@
 package service
 
-import "github.com/SephirothGit/warehouse/internal/repository"
+import (
+	"context"
+
+	"github.com/SephirothGit/warehouse/internal/repository"
+)
 
 type zoneService struct {
 	repo repository.ZoneRepo
 }
 
 type ZoneService interface {
-	CreateZone(warehouseID int, name string) (int, error)
-	ListZonesByWarehouse(warehouseID int) ([]repository.Zone, error)
+	CreateZone(ctx context.Context, warehouseID int, name string) (int, error)
+	ListZonesByWarehouse(ctx context.Context, warehouseID int) ([]repository.Zone, error)
 }
 
 func NewZoneService(repo repository.ZoneRepo) ZoneService {
@@ -17,10 +21,10 @@ func NewZoneService(repo repository.ZoneRepo) ZoneService {
 	}
 }
 
-func (z *zoneService) CreateZone(warehouseID int, name string) (int, error) {
-	return z.repo.Create(warehouseID, name)
+func (z *zoneService) CreateZone(ctx context.Context, warehouseID int, name string) (int, error) {
+	return z.repo.Create(ctx, warehouseID, name)
 }
 
-func (z *zoneService) ListZonesByWarehouse(warehouseID int) ([]repository.Zone, error) {
-	return z.repo.GetByWarehouse(warehouseID)
+func (z *zoneService) ListZonesByWarehouse(ctx context.Context, warehouseID int) ([]repository.Zone, error) {
+	return z.repo.GetByWarehouse(ctx, warehouseID)
 }
