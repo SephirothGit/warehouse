@@ -30,7 +30,7 @@ func (h *WarehouseHandler) CreateHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	id, err := h.warehouseService.CreateWarehouse(req.Name, req.Address)
+	id, err := h.warehouseService.CreateWarehouse(r.Context(), req.Name, req.Address)
 	if err != nil {
 		http.Error(w, "unable to create warehouse", http.StatusInternalServerError)
 		return
@@ -41,7 +41,7 @@ func (h *WarehouseHandler) CreateHandler(w http.ResponseWriter, r *http.Request)
 }
 
 func (h *WarehouseHandler) ListHandler(w http.ResponseWriter, r *http.Request) {
-	warehouses, err := h.warehouseService.ListWarehouses()
+	warehouses, err := h.warehouseService.ListWarehouses(r.Context())
 	if err != nil {
 		http.Error(w, "unable to fetch warehouses", http.StatusInternalServerError)
 		return
