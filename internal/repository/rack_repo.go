@@ -1,10 +1,13 @@
 package repository
 
-import "database/sql"
+import (
+	"context"
+	"database/sql"
+)
 
 type RackRepo interface {
-	Create(zoneID int, code string) (int, error)
-	GetByZone(zoneID int) ([]Rack, error)
+	Create(ctx context.Context, zoneID int, code string) (int, error)
+	GetByZone(ctx context.Context, zoneID int) ([]Rack, error)
 }
 
 type Rack struct {
@@ -23,8 +26,8 @@ func NewRackRepo(db *sql.DB) RackRepo {
 	}
 }
 
-func (r *rackRepo) Create(zoneID int, code string) (int, error) {
-	row := r.db.QueryRow("INSERT INTO racks (zone_id, code) VALUES ($1, $2) RETURNING id", zoneID, code)
+func (r *rackRepo) Create(ctx context.Context, zoneID int, code string) (int, error) {
+	row := r.db.QueryRowContext(ctx, "INSERT INTO racks (zone_id, code) VALUES ($1, $2) RETURNING id", zoneID, code)
 
 	var id int
 	err := row.Scan(&id)
@@ -35,8 +38,8 @@ func (r *rackRepo) Create(zoneID int, code string) (int, error) {
 	return id, nil
 }
 
-func (r *rackRepo) GetByZone(zoneID int) ([]Rack, error) {
-	rows, err := r.db.Query("SELECT id, zone_id, code FROM racks WHERE zone_id = $1", zoneID)
+func (r *rackRepo) GetByZone(ctx context.Context, zoneID int) ([]Rack, error) {
+	rows, err := r.db.QueryContext(ctx, "SELECT id, zone_id, code FROM racks WHERE zone_id = $1", zoneID)
 	if err != nil {
 		return nil, err
 	}
