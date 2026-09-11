@@ -31,7 +31,7 @@ func (h *RackHandler) CreateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := h.rackService.CreateRack(req.ZoneID, req.Code)
+	id, err := h.rackService.CreateRack(r.Context(), req.ZoneID, req.Code)
 	if err != nil {
 		http.Error(w, "unable to create rack", http.StatusInternalServerError)
 		return
@@ -49,7 +49,7 @@ func (h *RackHandler) ListHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	racks, err := h.rackService.GetByZone(zoneID)
+	racks, err := h.rackService.GetByZone(r.Context(), zoneID)
 	if err != nil {
 		http.Error(w, "unable to fetch racks", http.StatusInternalServerError)
 		return
