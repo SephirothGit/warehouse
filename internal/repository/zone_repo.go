@@ -1,10 +1,13 @@
 package repository
 
-import "database/sql"
+import (
+	"context"
+	"database/sql"
+)
 
 type ZoneRepo interface {
-	Create(warehouseID int, name string) (int, error)
-	GetByWarehouse(warehouseID int) ([]Zone, error)
+	Create(ctx context.Context, warehouseID int, name string) (int, error)
+	GetByWarehouse(ctx context.Context, warehouseID int) ([]Zone, error)
 }
 
 type Zone struct {
@@ -23,8 +26,8 @@ func NewZoneRepo(db *sql.DB) ZoneRepo {
 	}
 }
 
-func (z *zoneRepo) Create(warehouseID int, name string) (int, error) {
-	row := z.db.QueryRow("INSERT INTO zones (warehouse_id, name) VALUES ($1, $2) RETURNING id", warehouseID, name)
+func (z *zoneRepo) Create(ctx context.Context, warehouseID int, name string) (int, error) {
+	row := z.db.QueryRowContext(ctx, "INSERT INTO zones (warehouse_id, name) VALUES ($1, $2) RETURNING id", warehouseID, name)
 
 	var id int
 	err := row.Scan(&id)
@@ -35,8 +38,8 @@ func (z *zoneRepo) Create(warehouseID int, name string) (int, error) {
 	return id, nil
 }
 
-func (z *zoneRepo) GetByWarehouse(warehouseID int) ([]Zone, error) {
-	rows, err := z.db.Query("SELECT id, warehouse_id, name FROM zones WHERE warehouse_id = $1", warehouseID)
+func (z *zoneRepo) GetByWarehouse(ctx context.Context, warehouseID int) ([]Zone, error) {
+	rows, err := z.db.QueryContext(ctx, "SELECT id, warehouse_id, name FROM zones WHERE warehouse_id = $1", warehouseID)
 	if err != nil {
 		return nil, err
 	}
