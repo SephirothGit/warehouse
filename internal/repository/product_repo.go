@@ -1,10 +1,13 @@
 package repository
 
-import "database/sql"
+import (
+	"context"
+	"database/sql"
+)
 
 type ProductRepo interface {
-	Create(sku, name, unit string) (int, error)
-	GetAll() ([]Product, error)
+	Create(ctx context.Context, sku, name, unit string) (int, error)
+	GetAll(ctx context.Context) ([]Product, error)
 }
 
 type Product struct {
@@ -24,8 +27,8 @@ func NewProductRepo(db *sql.DB) ProductRepo {
 	}
 }
 
-func (p *productRepo) Create(sku, name, unit string) (int, error) {
-	row := p.db.QueryRow("INSERT INTO products (sku, name, unit) VALUES ($1, $2, $3) RETURNING id", sku, name, unit)
+func (p *productRepo) Create(ctx context.Context, sku, name, unit string) (int, error) {
+	row := p.db.QueryRowContext(ctx, "INSERT INTO products (sku, name, unit) VALUES ($1, $2, $3) RETURNING id", sku, name, unit)
 
 	var id int
 	err := row.Scan(&id)
@@ -35,8 +38,8 @@ func (p *productRepo) Create(sku, name, unit string) (int, error) {
 	return id, nil
 }
 
-func (p *productRepo) GetAll() ([]Product, error) {
-	rows, err := p.db.Query("SELECT id, sku, name, unit FROM products")
+func (p *productRepo) GetAll(ctx context.Context) ([]Product, error) {
+	rows, err := p.db.QueryContext(ctx, "SELECT id, sku, name, unit FROM products")
 	if err != nil {
 		return nil, err
 	}
