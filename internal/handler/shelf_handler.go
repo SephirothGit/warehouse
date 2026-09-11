@@ -31,7 +31,7 @@ func (h *ShelfHandler) CreateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := h.shelfService.CreateShelf(req.RackID, req.Level)
+	id, err := h.shelfService.CreateShelf(r.Context(), req.RackID, req.Level)
 	if err != nil {
 		http.Error(w, "unable to create a shelf", http.StatusInternalServerError)
 		return
@@ -49,7 +49,7 @@ func (h *ShelfHandler) ListHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	shelves, err := h.shelfService.GetByRack(rackID)
+	shelves, err := h.shelfService.GetByRack(r.Context(), rackID)
 	if err != nil {
 		http.Error(w, "unable to fetch shelves", http.StatusInternalServerError)
 		return
