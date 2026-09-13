@@ -5,14 +5,15 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
-	_ "github.com/lib/pq"
 	"github.com/SephirothGit/warehouse/internal/auth"
 	"github.com/SephirothGit/warehouse/internal/handler"
 	"github.com/SephirothGit/warehouse/internal/repository"
 	"github.com/SephirothGit/warehouse/internal/service"
 	"github.com/go-chi/chi"
 	"github.com/joho/godotenv"
+	_ "github.com/lib/pq"
 )
 
 func main() {
@@ -60,6 +61,7 @@ func main() {
 	stockHandler := handler.NewStockHandler(stockService)
 
 	r := chi.NewRouter()
+	r.Use(handler.TimeoutMiddleware(5 * time.Second))
 
 	r.Post("/register", authHandler.RegisterHandler)
 	r.Post("/login", authHandler.LoginHandler)
