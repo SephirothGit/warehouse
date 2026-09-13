@@ -3,6 +3,9 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"errors"
+
+	"github.com/lib/pq"
 )
 
 type UserRepo interface {
@@ -35,6 +38,10 @@ func (u *userRepo) Create(ctx context.Context, email string, passwordHash string
 	var id int
 	err := row.Scan(&id)
 	if err != nil {
+		var pqErr *pq.Error
+		if errors.As(err, &pqErr) && pqErr.Code == "23505" {
+			return 0, ErrAlreadyExists
+		}
 		return 0, err
 	}
 	return id, nil
@@ -46,6 +53,9 @@ func (u *userRepo) GetByEmail(ctx context.Context, email string) (User, error) {
 	var user User
 	err := row.Scan(&user.ID, &user.Email, &user.PasswordHash)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return User{}, ErrNotFound
+		}
 		return User{}, err
 	}
 	return user, nil
