@@ -2,8 +2,10 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 
+	"github.com/SephirothGit/warehouse/internal/repository"
 	"github.com/SephirothGit/warehouse/internal/service"
 )
 
@@ -41,6 +43,10 @@ func (h *AuthHandler) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 
 	userID, err := h.authService.Register(r.Context(), req.Email, req.Password)
 	if err != nil {
+		if errors.Is(err, repository.ErrAlreadyExists) {
+			http.Error(w, "email already exists", http.StatusConflict)
+			return
+		}
 		http.Error(w, "unable to register user", http.StatusInternalServerError)
 		return
 	}
