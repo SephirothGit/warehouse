@@ -2,8 +2,10 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 
+	"github.com/SephirothGit/warehouse/internal/repository"
 	"github.com/SephirothGit/warehouse/internal/service"
 )
 
@@ -33,6 +35,10 @@ func (h *ProductHandler) CreateHandler(w http.ResponseWriter, r *http.Request) {
 
 	id, err := h.productService.Create(r.Context(), req.SKU, req.Name, req.Unit)
 	if err != nil {
+		if errors.Is(err, repository.ErrAlreadyExists) {
+			http.Error(w, "sku already exists", http.StatusConflict)
+			return
+		}
 		http.Error(w, "unable to create product", http.StatusInternalServerError)
 		return
 	}
