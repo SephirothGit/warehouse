@@ -3,6 +3,9 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"errors"
+
+	"github.com/lib/pq"
 )
 
 type ProductRepo interface {
@@ -33,6 +36,10 @@ func (p *productRepo) Create(ctx context.Context, sku, name, unit string) (int, 
 	var id int
 	err := row.Scan(&id)
 	if err != nil {
+		var pqErr *pq.Error
+		if errors.As(err, &pqErr) && pqErr.Code == "23505" {
+			return 0, ErrAlreadyExists
+		}
 		return 0, err
 	}
 	return id, nil
