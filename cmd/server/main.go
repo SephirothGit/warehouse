@@ -1,10 +1,13 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/SephirothGit/warehouse/internal/auth"
@@ -91,8 +94,30 @@ func main() {
 		})
 	})
 
-	log.Println("server starting on :8080")
-	if err := http.ListenAndServe(":8080", r); err != nil {
-		log.Fatal("server failed to start: ", err)
+	srv := &http.Server{
+		Addr: ":8080",
+		Handler: r,
 	}
+
+	go func() {
+		log.Println("server starting on :8080")
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatal("server failed to start: ", err)
+		}
+	}()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	log.Println("shutting down server...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 15 * time.Second)
+	defer cancel()
+
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Fatal("server forced to shutdown: ", err)
+	}
+
+	log.Println("server exited")
 }
