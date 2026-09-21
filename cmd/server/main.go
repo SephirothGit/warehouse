@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -20,21 +20,25 @@ import (
 )
 
 func main() {
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	slog.SetDefault(logger)
+
 	if err := godotenv.Load(); err != nil {
-		log.Println("no .env file found")
+		slog.Info("no .env file found")
 	}
 
 	dsn := os.Getenv("DATABASE_URL")
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
-		log.Fatal("unable to open db connection", err)
+		slog.Error("unable to open db connection", "error", err)
+		os.Exit(1)
 	}
 	defer db.Close()
 
 	if err := db.Ping(); err != nil {
-		log.Fatal("unable to connect to db: ", err)
+		slog.Error("unable to connect to db: ", "error", err)
 	}
-	log.Println("connected to database successfully")
+	slog.Info("connected to database successfully")
 
 	jwtSecret := []byte(os.Getenv("JWT_SECRET"))
 
@@ -95,14 +99,15 @@ func main() {
 	})
 
 	srv := &http.Server{
-		Addr: ":8080",
+		Addr:    ":8080",
 		Handler: r,
 	}
 
 	go func() {
-		log.Println("server starting on :8080")
+		slog.Info("server starting on :8080")
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatal("server failed to start: ", err)
+			slog.Error("server failed to start: ", "error", err)
+			os.Exit(1)
 		}
 	}()
 
@@ -110,14 +115,15 @@ func main() {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 
-	log.Println("shutting down server...")
+	slog.Info("shutting down server...")
 
-	ctx, cancel := context.WithTimeout(context.Background(), 15 * time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
 	if err := srv.Shutdown(ctx); err != nil {
-		log.Fatal("server forced to shutdown: ", err)
+		slog.Error("server forced to shutdown: ", "error", err)
+		os.Exit(1)
 	}
 
-	log.Println("server exited")
+	slog.Info("server exited")
 }
