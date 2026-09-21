@@ -68,6 +68,7 @@ func main() {
 	stockHandler := handler.NewStockHandler(stockService)
 
 	r := chi.NewRouter()
+	r.Use(handler.LoggingMiddleware)
 	r.Use(handler.TimeoutMiddleware(5 * time.Second))
 
 	r.Post("/register", authHandler.RegisterHandler)
