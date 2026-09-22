@@ -36,7 +36,8 @@ func main() {
 	defer db.Close()
 
 	if err := db.Ping(); err != nil {
-		slog.Error("unable to connect to db: ", "error", err)
+		slog.Error("unable to connect to db", "error", err)
+		os.Exit(1)
 	}
 	slog.Info("connected to database successfully")
 
@@ -66,11 +67,13 @@ func main() {
 	shelfHandler := handler.NewShelfHandler(shelfService)
 	productHandler := handler.NewProductHandler(productService)
 	stockHandler := handler.NewStockHandler(stockService)
+	healthHandler := handler.NewHealthHandler(db)
 
 	r := chi.NewRouter()
 	r.Use(handler.LoggingMiddleware)
 	r.Use(handler.TimeoutMiddleware(5 * time.Second))
 
+	r.Get("/healthz", healthHandler.HealthzHandler)
 	r.Post("/register", authHandler.RegisterHandler)
 	r.Post("/login", authHandler.LoginHandler)
 	r.Post("/refresh", authHandler.RefreshHandler)
