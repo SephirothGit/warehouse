@@ -30,7 +30,7 @@ func TestValidateToken_Expired(t *testing.T) {
 	secret := []byte("test-secret")
 
 	claims := jwt.MapClaims{
-		"sub": "42", 
+		"sub": "42",
 		"exp": time.Now().Add(-1 * time.Minute).Unix(),
 		"iat": time.Now().Add(-16 * time.Minute).Unix(),
 	}
@@ -44,5 +44,25 @@ func TestValidateToken_Expired(t *testing.T) {
 	_, err = ValidateToken(tokenString, secret)
 	if err == nil {
 		t.Error("expected error validating expired token, got nil")
+	}
+}
+
+func TestValidateToken_AlgNone(t *testing.T) {
+	secret := []byte("test-secret")
+
+	claims := jwt.MapClaims{
+		"sub": "42",
+		"exp": time.Now().Add(15 * time.Minute).Unix(),
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodNone, claims)
+	tokenString, err := token.SignedString(jwt.UnsafeAllowNoneSignatureType)
+	if err != nil {
+		t.Fatalf("unexpected error signing method: %v", err)
+	}
+
+	_, err = ValidateToken(tokenString, secret)
+	if err == nil {
+		t.Error("expected error validating alg none token, got nil")
 	}
 }
