@@ -31,3 +31,18 @@ func TestRegister_Success(t *testing.T) {
 		t.Errorf("expected userID 1, got %d", userID)
 	}
 }
+
+func TestRegister_EmailAlreadyExists(t *testing.T) {
+	mockUserRepo := repository.MockUserRepo{
+		CreateFunc: func(ctx context.Context, email, passwordHash string) (int, error) {
+			return 0, repository.ErrAlreadyExists
+		},
+	}
+
+	authService := NewAuthService(mockUserRepo, nil, []byte("test-secret"))
+
+	_, err := authService.Register(context.Background(), "test@test.com", "password123")
+	if err != nil {
+		t.Errorf("expected ErrAlreadyExists, got %v", err)
+	}
+}

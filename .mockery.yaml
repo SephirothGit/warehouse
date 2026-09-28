@@ -1,0 +1,7 @@
+with-expecter: true
+dir: "internal/mocks"
+packages:
+ github.com/SephirothGit/warehouse/internal/repository:
+    interfaces:
+      UserRepo:
+      RefreshTokenRepo:
