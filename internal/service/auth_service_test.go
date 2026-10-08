@@ -2,23 +2,29 @@ package service
 
 import (
 	"context"
+	"errors"
 	"testing"
 
+	"github.com/stretchr/testify/mock"
+
+	"github.com/SephirothGit/warehouse/internal/mocks"
 	"github.com/SephirothGit/warehouse/internal/repository"
 )
 
 func TestRegister_Success(t *testing.T) {
-	mockUserRepo := &repository.MockUserRepo{
-		CreateFunc: func(ctx context.Context, email, passwordHash string) (int, error) {
-			return 1, nil
-		},
-		GetRoleIDByNameFunc: func(ctx context.Context, name string) (int, error) {
-			return 3, nil
-		},
-		AssignRoleFunc: func(ctx context.Context, userID, roleID int) error {
-			return nil
-		},
-	}
+	mockUserRepo := mocks.NewUserRepo(t)
+
+	mockUserRepo.EXPECT().
+		Create(mock.Anything, "test@test.com", mock.Anything).
+		Return(1, nil)
+
+	mockUserRepo.EXPECT().
+		GetRoleIDByName(mock.Anything, "warehouse_worker").
+		Return(3, nil)
+
+	mockUserRepo.EXPECT().
+		AssignRole(mock.Anything, 1, 3).
+		Return(nil)
 
 	authService := NewAuthService(mockUserRepo, nil, []byte("test-secret"))
 
@@ -33,16 +39,16 @@ func TestRegister_Success(t *testing.T) {
 }
 
 func TestRegister_EmailAlreadyExists(t *testing.T) {
-	mockUserRepo := repository.MockUserRepo{
-		CreateFunc: func(ctx context.Context, email, passwordHash string) (int, error) {
-			return 0, repository.ErrAlreadyExists
-		},
-	}
+	mockUserRepo := mocks.NewUserRepo(t)
+
+	mockUserRepo.EXPECT().
+		Create(mock.Anything, "test@test.com", mock.Anything).
+		Return(0, repository.ErrAlreadyExists)
 
 	authService := NewAuthService(mockUserRepo, nil, []byte("test-secret"))
 
 	_, err := authService.Register(context.Background(), "test@test.com", "password123")
-	if err != nil {
+	if !errors.Is(err, repository.ErrAlreadyExists) {
 		t.Errorf("expected ErrAlreadyExists, got %v", err)
 	}
 }
