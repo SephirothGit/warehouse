@@ -24,6 +24,7 @@ type IPRateLimiter struct {
 
 func NewIPRateLimiter(ctx context.Context, r rate.Limit, burst int) *IPRateLimiter {
 	rl := &IPRateLimiter{
+		visitors: make(map[string]*visitor),
 		rate:  r,
 		burst: burst,
 	}
