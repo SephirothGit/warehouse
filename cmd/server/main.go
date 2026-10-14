@@ -17,6 +17,7 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
+	"golang.org/x/time/rate"
 )
 
 func main() {
@@ -73,13 +74,18 @@ func main() {
 	stockHandler := handler.NewStockHandler(stockService)
 	healthHandler := handler.NewHealthHandler(db)
 
+	limiterCtx, cancelLimiter := context.WithCancel(context.Background())
+	defer cancelLimiter()
+
+	authLimiter := handler.NewIPRateLimiter(limiterCtx, rate.Every(12 * time.Second), 5)
+
 	r := chi.NewRouter()
 	r.Use(handler.LoggingMiddleware)
 	r.Use(handler.TimeoutMiddleware(5 * time.Second))
 
 	r.Get("/healthz", healthHandler.HealthzHandler)
-	r.Post("/register", authHandler.RegisterHandler)
-	r.Post("/login", authHandler.LoginHandler)
+	r.With(authLimiter.Middleware).Post("/register", authHandler.RegisterHandler)
+	r.With(authLimiter.Middleware).Post("/login", authHandler.LoginHandler)
 	r.Post("/refresh", authHandler.RefreshHandler)
 	r.Post("/logout", authHandler.LogoutHandler)
 
