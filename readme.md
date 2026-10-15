@@ -25,6 +25,7 @@ internal/
 - **Rotation:** every `/refresh` revokes the used token and issues a new pair.
 - **Reuse detection:** presenting an already-revoked refresh token revokes all of that user's tokens.
 - **Passwords:** bcrypt. Login returns the same error for an unknown email and a wrong password, which prevents user enumeration.
+- **Rate limiting:** per-IP token bucket on `/register` and `/login` (burst of 5, then 1 request per 12 s). Excess requests get `429 Too Many Requests` with a `Retry-After`.
 
 ## Authorization
 
@@ -83,7 +84,8 @@ Protected routes need `Authorization: Bearer <access_token>`.
 
 | Method | Path | Auth |
 |---|---|---|
-| POST | `/register`, `/login`, `/refresh`, `/logout` | public |
+| POST | `/register`, `/login`| public, rate limited |
+| POST | `/refresh`, `/logout` | public |
 | GET | `/healthz` | public |
 | GET | `/warehouses`, `/products` | any role |
 | GET | `/zones?warehouse_id=`, `/racks?zone_id=`, `/shelves?rack_id=` | any role |
