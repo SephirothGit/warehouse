@@ -1,0 +1,14 @@
+http:
+addr: ":8080"
+request_timeout: 5s
+read_header_timeout: 5s
+shutdown_timeout: 15s
+
+db:
+max_open_conns: 25
+max_idle_conns: 25
+conn_max_lifetime: 5m
+
+rate_limit:
+auth_burst: 5
+auth_interval: 12s
