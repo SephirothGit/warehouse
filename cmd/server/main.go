@@ -8,9 +8,9 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"github.com/SephirothGit/warehouse/internal/auth"
+	"github.com/SephirothGit/warehouse/internal/config"
 	"github.com/SephirothGit/warehouse/internal/handler"
 	"github.com/SephirothGit/warehouse/internal/repository"
 	"github.com/SephirothGit/warehouse/internal/service"
@@ -28,17 +28,22 @@ func main() {
 		slog.Info("no .env file found")
 	}
 
-	dsn := os.Getenv("DATABASE_URL")
-	db, err := sql.Open("postgres", dsn)
+	cfg, err := config.Load()
+	if err != nil {
+		slog.Error("unable to load config", "error", err)
+		os.Exit(1)
+	}
+
+	db, err := sql.Open("postgres", cfg.DB.URL)
 	if err != nil {
 		slog.Error("unable to open db connection", "error", err)
 		os.Exit(1)
 	}
 	defer db.Close()
 
-	db.SetMaxOpenConns(25)
-	db.SetMaxIdleConns(25)
-	db.SetConnMaxLifetime(5 * time.Minute)
+	db.SetMaxOpenConns(cfg.DB.MaxOpenConns)
+	db.SetMaxIdleConns(cfg.DB.MaxIdleConns)
+	db.SetConnMaxLifetime(cfg.DB.ConnMaxLifetime)
 
 	if err := db.Ping(); err != nil {
 		slog.Error("unable to connect to db", "error", err)
@@ -46,7 +51,7 @@ func main() {
 	}
 	slog.Info("connected to database successfully")
 
-	jwtSecret := []byte(os.Getenv("JWT_SECRET"))
+	jwtSecret := []byte(cfg.Auth.JWTSecret)
 
 	userRepo := repository.NewUserRepo(db)
 	refreshRepo := repository.NewRefreshTokenRepo(db)
@@ -77,11 +82,11 @@ func main() {
 	limiterCtx, cancelLimiter := context.WithCancel(context.Background())
 	defer cancelLimiter()
 
-	authLimiter := handler.NewIPRateLimiter(limiterCtx, rate.Every(12 * time.Second), 5)
+	authLimiter := handler.NewIPRateLimiter(limiterCtx, rate.Every(cfg.RateLimit.AuthInterval), cfg.RateLimit.AuthBurst)
 
 	r := chi.NewRouter()
 	r.Use(handler.LoggingMiddleware)
-	r.Use(handler.TimeoutMiddleware(5 * time.Second))
+	r.Use(handler.TimeoutMiddleware(cfg.HTTP.RequestTimeout))
 
 	r.Get("/healthz", healthHandler.HealthzHandler)
 	r.With(authLimiter.Middleware).Post("/register", authHandler.RegisterHandler)
@@ -113,12 +118,13 @@ func main() {
 	})
 
 	srv := &http.Server{
-		Addr:    ":8080",
-		Handler: r,
+		Addr:              cfg.HTTP.Addr,
+		Handler:           r,
+		ReadHeaderTimeout: cfg.HTTP.ReadHeaderTimeout,
 	}
 
 	go func() {
-		slog.Info("server starting on :8080")
+		slog.Info("server starting", "addr", cfg.HTTP.Addr)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			slog.Error("server failed to start: ", "error", err)
 			os.Exit(1)
@@ -131,11 +137,11 @@ func main() {
 
 	slog.Info("shutting down server...")
 
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), cfg.HTTP.ShutdownTimeout)
 	defer cancel()
 
 	if err := srv.Shutdown(ctx); err != nil {
-		slog.Error("server forced to shutdown: ", "error", err)
+		slog.Error("server forced to shutdown", "error", err)
 		os.Exit(1)
 	}
 
