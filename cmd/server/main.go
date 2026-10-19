@@ -85,6 +85,7 @@ func main() {
 	authLimiter := handler.NewIPRateLimiter(limiterCtx, rate.Every(cfg.RateLimit.AuthInterval), cfg.RateLimit.AuthBurst)
 
 	r := chi.NewRouter()
+	r.Use(handler.SecurityHeadersMiddleware)
 	r.Use(handler.LoggingMiddleware)
 	r.Use(handler.TimeoutMiddleware(cfg.HTTP.RequestTimeout))
 
