@@ -58,11 +58,14 @@ func (s *stockRepo) MoveStock(ctx context.Context, fromShelfID int, toSHelfID in
 	}
 	defer tx.Rollback()
 
-	_, err = tx.ExecContext(ctx, "UPDATE stock_items SET quantity = quantity - $1 WHERE shelf_id = $2 AND product_id = $3",
+	res, err := tx.ExecContext(ctx, "UPDATE stock_items SET quantity = quantity - $1 WHERE shelf_id = $2 AND product_id = $3 AND quantity >= $1",
 		quantity, fromShelfID, productID,
 	)
 	if err != nil {
 		return err
+	}
+	if n, _ := res.RowsAffected(); n == 0 {
+		return ErrInsufficientStock
 	}
 
 	_, err = tx.ExecContext(ctx, `INSERT INTO shelf_items (shelf_id, product_id, quantity)
