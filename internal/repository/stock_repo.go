@@ -52,7 +52,7 @@ func (s *stockRepo) GetByShelf(ctx context.Context, shelfID int) ([]StockItem, e
 }
 
 func (s *stockRepo) MoveStock(ctx context.Context, fromShelfID int, toSHelfID int, productID int, quantity int, userID int) error {
-	tx, err := s.db.Begin()
+	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
 	}
@@ -68,8 +68,8 @@ func (s *stockRepo) MoveStock(ctx context.Context, fromShelfID int, toSHelfID in
 		return ErrInsufficientStock
 	}
 
-	_, err = tx.ExecContext(ctx, `INSERT INTO shelf_items (shelf_id, product_id, quantity)
-VALUES ($!, $2, $3)
+	_, err = tx.ExecContext(ctx, `INSERT INTO stock_items (shelf_id, product_id, quantity)
+VALUES ($1, $2, $3)
 ON CONFLICT (shelf_id, product_id) 
 DO UPDATE SET quantity = stock_items.quantity + EXCLUDED.quantity`, toSHelfID, productID, quantity)
 	if err != nil {
@@ -86,7 +86,7 @@ VALUES ($1, $2, $3, $4, $5)`, productID, fromShelfID, toSHelfID, quantity, userI
 }
 
 func (s *stockRepo) AddStock(ctx context.Context, shelfID int, productID int, quantity int, userID int) error {
-	tx, err := s.db.Begin()
+	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
 	}
