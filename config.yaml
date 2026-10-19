@@ -5,6 +5,11 @@ read_header_timeout: 5s
 shutdown_timeout: 15s
 
 db:
+host: localhost
+port: 5433
+user: postgres
+name: warehouse_db
+sslmode: disable
 max_open_conns: 25
 max_idle_conns: 25
 conn_max_lifetime: 5m

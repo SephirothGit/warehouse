@@ -34,7 +34,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	db, err := sql.Open("postgres", cfg.DB.URL)
+	db, err := sql.Open("postgres", cfg.DB.DSN())
 	if err != nil {
 		slog.Error("unable to open db connection", "error", err)
 		os.Exit(1)
@@ -49,7 +49,7 @@ func main() {
 		slog.Error("unable to connect to db", "error", err)
 		os.Exit(1)
 	}
-	slog.Info("connected to database successfully")
+	slog.Info("connected to database successfully", "host", cfg.DB.Host, "port", cfg.DB.Port, "db", cfg.DB.Name)
 
 	jwtSecret := []byte(cfg.Auth.JWTSecret)
 

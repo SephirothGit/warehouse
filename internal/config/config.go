@@ -2,7 +2,10 @@ package config
 
 import (
 	"fmt"
+	"net"
+	"net/url"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -24,7 +27,12 @@ type HTTPConfig struct {
 }
 
 type DBConfig struct {
-	URL             string        `yaml:"-" env:"DATABASE_URL"`
+	Host            string        `yaml:"host" env:"DB_HOST" env-default:"localhost"`
+	Port            int           `yaml:"port" env:"DB_PORT" env-default:"5432"`
+	User            string        `yaml:"user" env:"DB_USER" env-default:"postgres"`
+	Name            string        `yaml:"name" env:"DB_NAME" env-default:"warehouse_db"`
+	SSLMode         string        `yaml:"sslmode" env:"DB_SSLMODE" env-default:"disable"`
+	Password        string        `yaml:"-" env:"DB_PASSWORD"`
 	MaxOpenConns    int           `yaml:"max_open_conns" env-default:"25"`
 	MaxIdleConns    int           `yaml:"max_idle_conns" env-default:"25"`
 	ConnMaxLifetime time.Duration `yaml:"conn_max_lifetime" env-default:"5m"`
@@ -51,7 +59,7 @@ func Load() (*Config, error) {
 	}
 
 	var err error
-	if cfg.DB.URL, err = secretValue("DATABASE_URL", cfg.DB.URL); err != nil {
+	if cfg.DB.Password, err = secretValue("DB_PASSWORD", cfg.DB.Password); err != nil {
 		return nil, err
 	}
 	if cfg.Auth.JWTSecret, err = secretValue("JWT_SECRET", cfg.Auth.JWTSecret); err != nil {
@@ -77,4 +85,18 @@ func secretValue(name, current string) (string, error) {
 		return "", fmt.Errorf("%s (or %s_FILE) is required", name, name)
 	}
 	return current, nil
+}
+
+func (c DBConfig) DSN() string {
+	q := url.Values{}
+	q.Set("sslmode", c.SSLMode)
+
+	u := url.URL{
+		Scheme: "postgres",
+		User: url.UserPassword(c.User, c.Password),
+		Host: net.JoinHostPort(c.Host, strconv.Itoa(c.Port)),
+		Path: "/" + c.Name,
+		RawQuery: q.Encode(),
+	}
+	return u.String()
 }
