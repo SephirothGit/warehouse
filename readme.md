@@ -60,7 +60,7 @@ psql -U postgres -d warehouse_db -f schema.sql
 
 `.env`:
 ```
-DATABASE_URL=postgres://user:password@localhost:5432/warehouse_db?sslmode=disable
+DB_PASSWORD=########
 JWT_SECRET=<long random string>
 ```
 
