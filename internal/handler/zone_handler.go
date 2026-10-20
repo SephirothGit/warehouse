@@ -27,13 +27,13 @@ func (z *ZoneHandler) CreateHandler(w http.ResponseWriter, r *http.Request) {
 	var req createZoneRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		http.Error(w, "invalid request body", http.StatusBadRequest)
+		respondError(w, err, "invalid request body")
 		return
 	}
 
 	id, err := z.zoneService.CreateZone(r.Context(), req.WarehouseID, req.Name)
 	if err != nil {
-		http.Error(w, "unable to create zone", http.StatusInternalServerError)
+		respondError(w, err, "unable to create zone")
 		return
 	}
 
@@ -45,13 +45,13 @@ func (z *ZoneHandler) ListHandler(w http.ResponseWriter, r *http.Request) {
 	warehouseIDStr := r.URL.Query().Get("warehouse_id")
 	warehouseID, err := strconv.Atoi(warehouseIDStr)
 	if err != nil {
-		http.Error(w, "invalid warehouse_id", http.StatusBadRequest)
+		respondError(w, err, "invalid warehouse_id")
 		return
 	}
 
 	zones, err := z.zoneService.ListZonesByWarehouse(r.Context(), warehouseID)
 	if err != nil {
-		http.Error(w, "unable to fetch zones", http.StatusInternalServerError)
+		respondError(w, err, "unable to fetch zones")
 		return
 	}
 

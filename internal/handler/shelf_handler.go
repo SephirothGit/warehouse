@@ -27,13 +27,13 @@ func (h *ShelfHandler) CreateHandler(w http.ResponseWriter, r *http.Request) {
 	var req createShelfRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		http.Error(w, "invalid request body", http.StatusBadRequest)
+		respondError(w, err, "invalid request body")
 		return
 	}
 
 	id, err := h.shelfService.CreateShelf(r.Context(), req.RackID, req.Level)
 	if err != nil {
-		http.Error(w, "unable to create a shelf", http.StatusInternalServerError)
+		respondError(w, err, "unable to create a shelf")
 		return
 	}
 
@@ -45,13 +45,13 @@ func (h *ShelfHandler) ListHandler(w http.ResponseWriter, r *http.Request) {
 	rackIDStr := r.URL.Query().Get("rack_id")
 	rackID, err := strconv.Atoi(rackIDStr)
 	if err != nil {
-		http.Error(w, "unable to fetch shelves", http.StatusBadRequest)
+		respondError(w, err, "unable to fetch shelves")
 		return
 	}
 
 	shelves, err := h.shelfService.GetByRack(r.Context(), rackID)
 	if err != nil {
-		http.Error(w, "unable to fetch shelves", http.StatusInternalServerError)
+		respondError(w, err, "unable to fetch shelves")
 		return
 	}
 

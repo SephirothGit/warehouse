@@ -26,13 +26,13 @@ func (h *WarehouseHandler) CreateHandler(w http.ResponseWriter, r *http.Request)
 	var req createWarehouseRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		http.Error(w, "invalid request body", http.StatusBadRequest)
+		respondError(w, err, "unable to create handler")
 		return
 	}
 
 	id, err := h.warehouseService.CreateWarehouse(r.Context(), req.Name, req.Address)
 	if err != nil {
-		http.Error(w, "unable to create warehouse", http.StatusInternalServerError)
+		respondError(w, err, "unable to create warehouse")
 		return
 	}
 
@@ -43,7 +43,7 @@ func (h *WarehouseHandler) CreateHandler(w http.ResponseWriter, r *http.Request)
 func (h *WarehouseHandler) ListHandler(w http.ResponseWriter, r *http.Request) {
 	warehouses, err := h.warehouseService.ListWarehouses(r.Context())
 	if err != nil {
-		http.Error(w, "unable to fetch warehouses", http.StatusInternalServerError)
+		respondError(w, err, "unable to fetch warehouses")
 		return
 	}
 
