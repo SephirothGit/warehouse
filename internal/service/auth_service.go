@@ -28,6 +28,15 @@ type AuthService interface {
 	Logout(ctx context.Context, rawRefreshToken string) error
 }
 
+// dummyHash equalizes response time when the user does not exist
+var dummyHash = func() string {
+	h, err := auth.HashPassword("timing-equalizer")
+	if err != nil {
+		panic(err)
+	}
+	return h
+}()
+
 func NewAuthService(userRepo repository.UserRepo, refreshRepo repository.RefreshTokenRepo, jwtSecret []byte) AuthService {
 	return &authService{
 		userRepo:    userRepo,
