@@ -27,13 +27,13 @@ func (h *ProductHandler) CreateHandler(w http.ResponseWriter, r *http.Request) {
 	var req createProductRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		respondError(w, err, "invalid request body")
+		http.Error(w, "invalid request body", http.StatusBadRequest)
 		return
 	}
 
 	id, err := h.productService.Create(r.Context(), req.SKU, req.Name, req.Unit)
 	if err != nil {
-		respondError(w, err, "sku already exists")
+		respondError(w, err, "unable to create product")
 		return
 	}
 

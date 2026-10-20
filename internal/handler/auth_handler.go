@@ -35,7 +35,7 @@ func (h *AuthHandler) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	var req registerRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		respondError(w, err, "invalid request body")
+		http.Error(w, "invalid request body", http.StatusBadRequest)
 		return
 	}
 
@@ -53,13 +53,13 @@ func (h *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	var req loginRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		respondError(w, err, "unable to login user")
+		http.Error(w, "unable to login user", http.StatusBadRequest)
 		return
 	}
 
 	tokens, err := h.authService.Login(r.Context(), req.Email, req.Password)
 	if err != nil {
-		respondError(w, err, "invalid email or password")
+		http.Error(w, "invalid email or password", http.StatusUnauthorized)
 		return
 	}
 
@@ -71,13 +71,13 @@ func (h *AuthHandler) RefreshHandler(w http.ResponseWriter, r *http.Request) {
 	var req refreshRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		respondError(w, err, "invalid request body")
+		http.Error(w, "invalid request body", http.StatusBadRequest)
 		return
 	}
 
 	tokens, err := h.authService.RefreshAccessToken(r.Context(), req.RefreshToken)
 	if err != nil {
-		respondError(w, err, "invalid or expired refresh token")
+		http.Error(w, "invalid or expired refresh token", http.StatusUnauthorized)
 		return
 	}
 
@@ -89,13 +89,13 @@ func (h *AuthHandler) LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	var req refreshRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		respondError(w, err, "invalid request body")
+		http.Error(w, "invalid request body", http.StatusBadRequest)
 		return
 	}
 
 	err = h.authService.Logout(r.Context(), req.RefreshToken)
 	if err != nil {
-		respondError(w, err, "unable to logout")
+		http.Error(w, "unable to logout", http.StatusInternalServerError)
 		return
 	}
 

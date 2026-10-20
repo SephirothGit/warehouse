@@ -34,7 +34,7 @@ func (h *StockHandler) MoveHandler(w http.ResponseWriter, r *http.Request) {
 	var req moveStockRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		respondError(w, err, "invalid request body")
+		http.Error(w, "invalid request body", http.StatusBadRequest)
 		return
 	}
 
@@ -63,7 +63,7 @@ func (h *StockHandler) AddHandler(w http.ResponseWriter, r *http.Request) {
 	var req addStockRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-	respondError(w, err, "invalid request body")
+		http.Error(w, "invalid request body", http.StatusBadRequest)
 		return
 	}
 
@@ -92,7 +92,7 @@ func (h *StockHandler) GetByShelfHandler(w http.ResponseWriter, r *http.Request)
 	shelfIDStr := r.URL.Query().Get("shelf_id")
 	shelfID, err := strconv.Atoi(shelfIDStr)
 	if err != nil {
-		respondError(w, err, "invalid shelf_id")
+		http.Error(w, "invalid shelf_id", http.StatusBadRequest)
 		return
 	}
 
