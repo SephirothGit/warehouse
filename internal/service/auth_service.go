@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 	"time"
@@ -77,8 +78,11 @@ func (a *authService) Login(ctx context.Context, email, password string) (TokenP
 
 	err = auth.CheckPassword(user.PasswordHash, password)
 	if err != nil {
-		return TokenPair{}, err
+		if errors.Is(err, repository.ErrNotFound) {
+			_ = auth.CheckPassword(dummyHash, password)
+		}
 	}
+	return TokenPair{}, err
 
 	accessToken, err := auth.GenerateToken(strconv.Itoa(user.ID), a.jwtSecret)
 	if err != nil {
