@@ -81,8 +81,8 @@ func (a *authService) Login(ctx context.Context, email, password string) (TokenP
 		if errors.Is(err, repository.ErrNotFound) {
 			_ = auth.CheckPassword(dummyHash, password)
 		}
+		return TokenPair{}, err
 	}
-	return TokenPair{}, err
 
 	accessToken, err := auth.GenerateToken(strconv.Itoa(user.ID), a.jwtSecret)
 	if err != nil {
