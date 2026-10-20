@@ -47,6 +47,11 @@ func NewAuthService(userRepo repository.UserRepo, refreshRepo repository.Refresh
 }
 
 func (a *authService) Register(ctx context.Context, email, password string) (int, error) {
+	email = normalizeEmail(email)
+	if err := validateCredentials(email, password); err != nil {
+		return 0, err
+	}
+
 	hashedPassword, err := auth.HashPassword(password)
 	if err != nil {
 		return 0, err
@@ -71,6 +76,7 @@ func (a *authService) Register(ctx context.Context, email, password string) (int
 }
 
 func (a *authService) Login(ctx context.Context, email, password string) (TokenPair, error) {
+	email = normalizeEmail(email)
 	user, err := a.userRepo.GetByEmail(ctx, email)
 	if err != nil {
 		return TokenPair{}, err

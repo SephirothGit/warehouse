@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang-jwt/jwt"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 func TestGenerateAndValidateToken(t *testing.T) {
@@ -64,5 +64,54 @@ func TestValidateToken_AlgNone(t *testing.T) {
 	_, err = ValidateToken(tokenString, secret)
 	if err == nil {
 		t.Error("expected error validating alg none token, got nil")
+	}
+}
+
+func TestValidateToken_WrongSecret(t *testing.T) {
+	token, err := GenerateToken("42", []byte("correct-secret"))
+	if err != nil {
+		t.Fatalf("unexpected error generating token: %v", err)
+	}
+
+	_, err = ValidateToken(token, []byte("wrong-secret"))
+	if err == nil {
+		t.Error("expected error validating token with wrong secret, got nil")
+	}
+}
+
+func TestValidateToken_WrongAlgorithm(t *testing.T) {
+	secret := []byte("test-secret")
+
+	claims := jwt.MapClaims{
+		"sub": "42",
+		"exp": time.Now().Add(15 * time.Minute).Unix(),
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS512, claims)
+	tokenString, err := token.SignedString(secret)
+	if err != nil {
+		t.Fatalf("unexpected error signing token: %v", err)
+	}
+
+	_, err = ValidateToken(tokenString, secret)
+	if err == nil {
+		t.Error("expected error validating HS512 token, got nil")
+	}
+}
+
+func TestValidateToken_NoExpiration(t *testing.T) {
+	secret := []byte("test-secret")
+
+	claims := jwt.MapClaims{"sub": "42"}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, err := token.SignedString(secret)
+	if err != nil {
+		t.Fatalf("unexpected error signing token: %v", err)
+	}
+
+	_, err = ValidateToken(tokenString, secret)
+	if err == nil {
+		t.Error("expected error validating token without exp, got nil")
 	}
 }
