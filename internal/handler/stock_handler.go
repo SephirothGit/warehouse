@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/SephirothGit/warehouse/internal/auth"
 	"github.com/SephirothGit/warehouse/internal/service"
 )
 
@@ -38,7 +39,7 @@ func (h *StockHandler) MoveHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userIDStr, ok := r.Context().Value("user_id").(string)
+	userIDStr, ok := auth.UserIDFromContext(r.Context())
 	if !ok {
 		http.Error(w, "user id not found in context", http.StatusUnauthorized)
 		return
@@ -67,7 +68,7 @@ func (h *StockHandler) AddHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userIDStr, ok := r.Context().Value("user_id").(string)
+	userIDStr, ok := auth.UserIDFromContext(r.Context())
 	if !ok {
 		http.Error(w, "user id not found in context", http.StatusUnauthorized)
 		return

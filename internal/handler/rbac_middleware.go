@@ -4,13 +4,14 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/SephirothGit/warehouse/internal/auth"
 	"github.com/SephirothGit/warehouse/internal/repository"
 )
 
 func RequireRole(role string, userRepo repository.UserRepo) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			userID, ok := r.Context().Value("user_id").(string)
+			userID, ok := auth.UserIDFromContext(r.Context())
 			if !ok {
 				http.Error(w, "user id is not found in context", http.StatusUnauthorized)
 				return

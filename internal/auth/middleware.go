@@ -6,6 +6,19 @@ import (
 	"strings"
 )
 
+type ctxKey string
+
+const userIDKey ctxKey = "user_id"
+
+func WithUserID(ctx context.Context, userID string) context.Context {
+	return context.WithValue(ctx, userIDKey, userID)
+}
+
+func UserIDFromContext(ctx context.Context) (string, bool) {
+	id, ok := ctx.Value(userIDKey).(string)
+	return id, ok
+}
+
 func JWTMiddleware(secret []byte) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -27,7 +40,7 @@ func JWTMiddleware(secret []byte) func(http.Handler) http.Handler {
 				return 
 			}
 
-			ctx := context.WithValue(r.Context(), "user_id", userID)
+			ctx := WithUserID(r.Context(), userID)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
