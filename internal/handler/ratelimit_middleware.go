@@ -2,8 +2,10 @@ package handler
 
 import (
 	"context"
+	"math"
 	"net"
 	"net/http"
+	"strconv"
 	"sync"
 	"time"
 
@@ -25,8 +27,8 @@ type IPRateLimiter struct {
 func NewIPRateLimiter(ctx context.Context, r rate.Limit, burst int) *IPRateLimiter {
 	rl := &IPRateLimiter{
 		visitors: make(map[string]*visitor),
-		rate:  r,
-		burst: burst,
+		rate:     r,
+		burst:    burst,
 	}
 	go rl.cleanup(ctx)
 	return rl
@@ -73,7 +75,8 @@ func (rl *IPRateLimiter) Middleware(next http.Handler) http.Handler {
 		}
 
 		if !rl.getLimiter(ip).Allow() {
-			w.Header().Set("Retry-After", "12")
+			retry := int(math.Ceil(1 / float64(rl.rate)))
+			w.Header().Set("Retry-After", strconv.Itoa(retry))
 			http.Error(w, "too many requests", http.StatusTooManyRequests)
 			return
 		}

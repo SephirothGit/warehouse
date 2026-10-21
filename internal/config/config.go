@@ -43,8 +43,10 @@ type AuthConfig struct {
 }
 
 type RateLimitConfig struct {
-	AuthBurst    int           `yaml:"auth_burst" env-default:"5"`
-	AuthInterval time.Duration `yaml:"auth_interval" env-default:"12s"`
+	AuthBurst       int           `yaml:"auth_burst" env-default:"5"`
+	AuthInterval    time.Duration `yaml:"auth_interval" env-default:"12s"`
+	RefreshBurst    int           `yaml:"refresh_burst" env-default: "10"`
+	RefreshInterval time.Duration `yaml:"refresh_interval" env-default: "6s"`
 }
 
 func Load() (*Config, error) {
@@ -92,10 +94,10 @@ func (c DBConfig) DSN() string {
 	q.Set("sslmode", c.SSLMode)
 
 	u := url.URL{
-		Scheme: "postgres",
-		User: url.UserPassword(c.User, c.Password),
-		Host: net.JoinHostPort(c.Host, strconv.Itoa(c.Port)),
-		Path: "/" + c.Name,
+		Scheme:   "postgres",
+		User:     url.UserPassword(c.User, c.Password),
+		Host:     net.JoinHostPort(c.Host, strconv.Itoa(c.Port)),
+		Path:     "/" + c.Name,
 		RawQuery: q.Encode(),
 	}
 	return u.String()

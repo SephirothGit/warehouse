@@ -17,3 +17,5 @@ conn_max_lifetime: 5m
 rate_limit:
 auth_burst: 5
 auth_interval: 12s
+refresh_burst: 10
+refresh_interval: 6s

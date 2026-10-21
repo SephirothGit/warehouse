@@ -83,6 +83,7 @@ func main() {
 	defer cancelLimiter()
 
 	authLimiter := handler.NewIPRateLimiter(limiterCtx, rate.Every(cfg.RateLimit.AuthInterval), cfg.RateLimit.AuthBurst)
+	refreshLimiter := handler.NewIPRateLimiter(limiterCtx, rate.Every(cfg.RateLimit.RefreshInterval), cfg.RateLimit.RefreshBurst)
 
 	r := chi.NewRouter()
 	r.Use(handler.SecurityHeadersMiddleware)
@@ -92,6 +93,7 @@ func main() {
 	r.Get("/healthz", healthHandler.HealthzHandler)
 	r.With(authLimiter.Middleware).Post("/register", authHandler.RegisterHandler)
 	r.With(authLimiter.Middleware).Post("/login", authHandler.LoginHandler)
+	r.With(refreshLimiter.Middleware).Post("/refresh", authHandler.RefreshHandler)
 	r.Post("/refresh", authHandler.RefreshHandler)
 	r.Post("/logout", authHandler.LogoutHandler)
 
