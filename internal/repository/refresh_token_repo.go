@@ -11,6 +11,7 @@ type RefreshTokenRepo interface {
 	FindByHash(ctx context.Context, tokenHash string) (userID int, expiresAt time.Time, revoked bool, err error)
 	Revoke(ctx context.Context, tokenHash string) error
 	RevokeAllForUser(ctx context.Context, userID int) error
+	DeleteExpired(ctx context.Context, before time.Time) (int64, error)
 }
 
 type refreshTokenRepo struct {
@@ -51,4 +52,12 @@ func (r *refreshTokenRepo) RevokeAllForUser(ctx context.Context, userID int) err
 		return err
 	}
 	return nil
+}
+
+func (r *refreshTokenRepo) DeleteExpired(ctx context.Context, before time.Time) (int64, error) {
+	res, err := r.db.ExecContext(ctx, "DELETE FROM refresh_tokens WHERE expires_at < $1", before)
+	if err != nil {
+		return 0, err
+	}
+	return res.RowsAffected()
 }

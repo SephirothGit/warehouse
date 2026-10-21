@@ -14,6 +14,7 @@ import (
 	"github.com/SephirothGit/warehouse/internal/handler"
 	"github.com/SephirothGit/warehouse/internal/repository"
 	"github.com/SephirothGit/warehouse/internal/service"
+	"github.com/SephirothGit/warehouse/internal/worker"
 	"github.com/go-chi/chi"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
@@ -79,11 +80,12 @@ func main() {
 	stockHandler := handler.NewStockHandler(stockService)
 	healthHandler := handler.NewHealthHandler(db)
 
-	limiterCtx, cancelLimiter := context.WithCancel(context.Background())
-	defer cancelLimiter()
+	bgCtx, cancelBg := context.WithCancel(context.Background())
+	go worker.RunRefreshTokenCleanup(bgCtx, refreshRepo, cfg.Auth.RefreshCleanupInterval)
+	defer cancelBg()
 
-	authLimiter := handler.NewIPRateLimiter(limiterCtx, rate.Every(cfg.RateLimit.AuthInterval), cfg.RateLimit.AuthBurst)
-	refreshLimiter := handler.NewIPRateLimiter(limiterCtx, rate.Every(cfg.RateLimit.RefreshInterval), cfg.RateLimit.RefreshBurst)
+	authLimiter := handler.NewIPRateLimiter(bgCtx, rate.Every(cfg.RateLimit.AuthInterval), cfg.RateLimit.AuthBurst)
+	refreshLimiter := handler.NewIPRateLimiter(bgCtx, rate.Every(cfg.RateLimit.RefreshInterval), cfg.RateLimit.RefreshBurst)
 
 	r := chi.NewRouter()
 	r.Use(handler.SecurityHeadersMiddleware)

@@ -40,6 +40,7 @@ type DBConfig struct {
 
 type AuthConfig struct {
 	JWTSecret string `yaml:"-" env:"JWT_SECRET"`
+	RefreshCleanupInterval time.Duration `yaml: "refresh_cleanup_interval" env-default: "24h"`
 }
 
 type RateLimitConfig struct {
