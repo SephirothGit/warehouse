@@ -1,0 +1,5 @@
+.git
+.env
+pg.env
+secrets/
+cookies.txt
