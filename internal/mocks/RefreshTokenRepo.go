@@ -23,6 +23,63 @@ func (_m *RefreshTokenRepo) EXPECT() *RefreshTokenRepo_Expecter {
 	return &RefreshTokenRepo_Expecter{mock: &_m.Mock}
 }
 
+// DeleteExpired provides a mock function with given fields: ctx, before
+func (_m *RefreshTokenRepo) DeleteExpired(ctx context.Context, before time.Time) (int64, error) {
+	ret := _m.Called(ctx, before)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteExpired")
+	}
+
+	var r0 int64
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, time.Time) (int64, error)); ok {
+		return rf(ctx, before)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, time.Time) int64); ok {
+		r0 = rf(ctx, before)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, time.Time) error); ok {
+		r1 = rf(ctx, before)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// RefreshTokenRepo_DeleteExpired_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteExpired'
+type RefreshTokenRepo_DeleteExpired_Call struct {
+	*mock.Call
+}
+
+// DeleteExpired is a helper method to define mock.On call
+//   - ctx context.Context
+//   - before time.Time
+func (_e *RefreshTokenRepo_Expecter) DeleteExpired(ctx interface{}, before interface{}) *RefreshTokenRepo_DeleteExpired_Call {
+	return &RefreshTokenRepo_DeleteExpired_Call{Call: _e.mock.On("DeleteExpired", ctx, before)}
+}
+
+func (_c *RefreshTokenRepo_DeleteExpired_Call) Run(run func(ctx context.Context, before time.Time)) *RefreshTokenRepo_DeleteExpired_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(time.Time))
+	})
+	return _c
+}
+
+func (_c *RefreshTokenRepo_DeleteExpired_Call) Return(_a0 int64, _a1 error) *RefreshTokenRepo_DeleteExpired_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *RefreshTokenRepo_DeleteExpired_Call) RunAndReturn(run func(context.Context, time.Time) (int64, error)) *RefreshTokenRepo_DeleteExpired_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // FindByHash provides a mock function with given fields: ctx, tokenHash
 func (_m *RefreshTokenRepo) FindByHash(ctx context.Context, tokenHash string) (int, time.Time, bool, error) {
 	ret := _m.Called(ctx, tokenHash)

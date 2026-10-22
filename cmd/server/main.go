@@ -96,7 +96,6 @@ func main() {
 	r.With(authLimiter.Middleware).Post("/register", authHandler.RegisterHandler)
 	r.With(authLimiter.Middleware).Post("/login", authHandler.LoginHandler)
 	r.With(refreshLimiter.Middleware).Post("/refresh", authHandler.RefreshHandler)
-	r.Post("/refresh", authHandler.RefreshHandler)
 	r.Post("/logout", authHandler.LogoutHandler)
 
 	r.Group(func(r chi.Router) {

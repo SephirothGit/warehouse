@@ -39,15 +39,15 @@ type DBConfig struct {
 }
 
 type AuthConfig struct {
-	JWTSecret string `yaml:"-" env:"JWT_SECRET"`
-	RefreshCleanupInterval time.Duration `yaml: "refresh_cleanup_interval" env-default: "24h"`
+	JWTSecret              string        `yaml:"-" env:"JWT_SECRET"`
+	RefreshCleanupInterval time.Duration `yaml:"refresh_cleanup_interval" env-default:"24h"`
 }
 
 type RateLimitConfig struct {
 	AuthBurst       int           `yaml:"auth_burst" env-default:"5"`
 	AuthInterval    time.Duration `yaml:"auth_interval" env-default:"12s"`
-	RefreshBurst    int           `yaml:"refresh_burst" env-default: "10"`
-	RefreshInterval time.Duration `yaml:"refresh_interval" env-default: "6s"`
+	RefreshBurst    int           `yaml:"refresh_burst" env-default:"10"`
+	RefreshInterval time.Duration `yaml:"refresh_interval" env-default:"6s"`
 }
 
 func Load() (*Config, error) {
@@ -71,6 +71,12 @@ func Load() (*Config, error) {
 
 	if len(cfg.Auth.JWTSecret) < 32 {
 		return nil, fmt.Errorf("JWT_SECRET must be at least 32 characters")
+	}
+
+	if cfg.Auth.RefreshCleanupInterval <= 0 ||
+		cfg.RateLimit.AuthInterval <= 0 || cfg.RateLimit.RefreshInterval <= 0 ||
+		cfg.RateLimit.AuthBurst <= 0 || cfg.RateLimit.RefreshBurst <= 0 {
+		return nil, fmt.Errorf("rate limit and cleanup settings must be positive")
 	}
 
 	return &cfg, nil
