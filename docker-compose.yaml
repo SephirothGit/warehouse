@@ -17,12 +17,31 @@ services:
       timeout: 3s
       retries: 10
 
+  migrate:
+    image: migrate/migrate:v4.18.1
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./migrations:/migrations:ro
+    secrets:
+      - db_password
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >
+        migrate -path /migrations
+        -database "postgres://postgres:$$(cat /run/secrets/db_password)@db:5432/warehouse_db?sslmode=disable"
+        up
+    restart: "no"
+
   app:
     build: .
     restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     environment:
       DB_HOST: db
       DB_PORT: "5432"
