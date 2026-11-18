@@ -100,7 +100,7 @@ func (a *authService) Login(ctx context.Context, email, password string) (TokenP
 		return TokenPair{}, err
 	}
 	tokenHash := auth.HashToken(refreshToken)
-	expiresAt := time.Now().Add(30 * 24 * time.Hour)
+	expiresAt := time.Now().UTC().Add(30 * 24 * time.Hour)
 
 	err = a.refreshRepo.Save(ctx, user.ID, tokenHash, expiresAt)
 	if err != nil {
@@ -137,7 +137,7 @@ func (a *authService) RefreshAccessToken(ctx context.Context, rawRefreshToken st
 		return TokenPair{}, err
 	}
 	newTokenHash := auth.HashToken(newRawRefreshToken)
-	newExpiresAt := time.Now().Add(30 * 24 * time.Hour)
+	newExpiresAt := time.Now().UTC().Add(30 * 24 * time.Hour)
 
 	err = a.refreshRepo.Save(ctx, userID, newTokenHash, newExpiresAt)
 	if err != nil {
