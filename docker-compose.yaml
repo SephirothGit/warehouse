@@ -9,7 +9,6 @@ services:
       - db_password
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ./schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
     ports:
       - "127.0.0.1:5433:5432"
     healthcheck:
