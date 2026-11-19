@@ -15,7 +15,7 @@ import (
 	"github.com/SephirothGit/warehouse/internal/repository"
 	"github.com/SephirothGit/warehouse/internal/service"
 	"github.com/SephirothGit/warehouse/internal/worker"
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 	"golang.org/x/time/rate"
