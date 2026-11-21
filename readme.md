@@ -1,7 +1,5 @@
 # Warehouse Tracker
 
-[![CI](https://github.com/SephirothGit/warehouse-tracker/actions/workflows/ci.yml/badge.svg)](https://github.com/SephirothGit/warehouse-tracker/actions/workflows/ci.yml)
-
 REST API for warehouse inventory management, written in Go. Tracks stock across a warehouse → zone → rack → shelf hierarchy, with JWT authentication (refresh token rotation and reuse detection) and role-based access control.
 
 ## Stack
