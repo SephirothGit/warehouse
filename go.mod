@@ -3,12 +3,12 @@ module github.com/SephirothGit/warehouse
 go 1.26.11
 
 require (
-	github.com/go-chi/chi v1.5.5
 	github.com/joho/godotenv v1.5.1
-	golang.org/x/crypto v0.55.0
+	golang.org/x/crypto v0.58.1-0.20261009181718-2f1f834330b2
 )
 
 require (
+	github.com/go-chi/chi/v5 v5.5.0
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/google/uuid v1.6.0
 	github.com/ilyakaznacheev/cleanenv v1.5.0
@@ -18,7 +18,6 @@ require (
 
 require (
 	github.com/BurntSushi/toml v1.2.1 // indirect
-	github.com/go-chi/chi/v5 v5.5.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	olympos.io/encoding/edn v0.0.0-20201019073823-d3554ca0b0a3 // indirect
 )
